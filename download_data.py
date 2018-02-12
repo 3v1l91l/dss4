@@ -9,7 +9,7 @@ from lib import load_data
 PHOTOS_DIR = 'photos'
 ROOT_PATH = '.'
 PHOTOS_PATH = os.path.join(ROOT_PATH, PHOTOS_DIR)
-NUM_PROCESSES = 100
+NUM_PROCESSES = 5
 
 def process_url(id_url):
     try:
@@ -24,7 +24,7 @@ def download_data():
 
     if not os.path.exists(PHOTOS_PATH):
         os.makedirs(PHOTOS_PATH)
-    existing_photos = [x.split('.')[0] for x in os.listdir(PHOTOS_PATH) if not x.startswith('.')]
+    existing_photos = [int(x.split('.')[0]) for x in os.listdir(PHOTOS_PATH) if not x.startswith('.')]
 
     users_df.drop(existing_photos, inplace=True)
     urls = users_df['Photo'].values
