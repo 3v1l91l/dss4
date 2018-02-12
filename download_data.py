@@ -1,20 +1,35 @@
 import pandas as pd
-import urllib.request
 import os
 from tqdm import tqdm
+import multiprocessing
+from urllib.request import urlretrieve
+from urllib.error import URLError
+from lib import load_data
 
 PHOTOS_DIR = 'photos'
 ROOT_PATH = '.'
+PHOTOS_PATH = os.path.join(ROOT_PATH, PHOTOS_DIR)
+NUM_PROCESSES = 100
+
+def process_url(id_url):
+    try:
+        save_photo_path = os.path.join(PHOTOS_PATH, str(id_url[0]) + '.jpg')
+        urlretrieve(id_url[1], save_photo_path)
+    except URLError:
+        print('URLError for id: {}, url: '.format(id_url[0], id_url[1]))
 
 def download_data():
-    photos_path = os.path.join(ROOT_PATH, PHOTOS_DIR)
-    users_df = pd.read_csv('Users.csv', sep=';', dtype={'User_id': str})
+    pool = multiprocessing.Pool(processes=NUM_PROCESSES)
+    users_df, _ = load_data()
 
-    if not os.path.exists(photos_path):
-        os.makedirs(photos_path)
+    if not os.path.exists(PHOTOS_PATH):
+        os.makedirs(PHOTOS_PATH)
+    existing_photos = [x.split('.')[0] for x in os.listdir(PHOTOS_PATH) if not x.startswith('.')]
 
-    for (id, url) in tqdm(users_df[['User_id', 'Photo']][:100].values):
-        urllib.request.urlretrieve(url, os.path.join(photos_path, id + '.jpg'))
+    users_df.drop(existing_photos, inplace=True)
+    urls = users_df['Photo'].values
+    users_ids = users_df.index.values
+    list(tqdm(pool.imap_unordered(process_url, zip(users_ids, urls)), total=len(users_ids)))
 
 if __name__ == '__main__':
     download_data()
