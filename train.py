@@ -8,7 +8,7 @@ np.random.seed(42)
 BATCH_SIZE = 256
 def train():
     users, finder_decisions = load_data()
-    zz = users.index.unique()[:10000]
+    zz = users.index.unique()[:50000]
     users.drop(users.index[~users.index.isin(zz)], inplace=True)
     finder_decisions.drop(finder_decisions.index[~finder_decisions['Sender_id'].isin(zz)], inplace=True)
     finder_decisions.drop(finder_decisions.index[~finder_decisions['Receiver_id'].isin(zz)], inplace=True)
@@ -21,7 +21,7 @@ def train():
 
     n_users = len(users)
     finder_decisions_train, finder_decisions_valid =  train_test_split(finder_decisions, stratify=finder_decisions['Decision'])
-    n_latent_factors = 3
+    n_latent_factors = 30
     sender_input = keras.layers.Input(shape=[1], name='Item')
     sender_embedding = keras.layers.Embedding(n_users + 1, n_latent_factors, name='Movie-Embedding')(sender_input)
     sender_vec = keras.layers.Flatten(name='FlattenMovies')(sender_embedding)
@@ -42,15 +42,13 @@ def train():
     # dropout_3 = keras.layers.Dropout(0.2, name='Dropout')(dense_3)
     dense_4 = keras.layers.Dense(20, name='FullyConnected-3', activation='relu')(dense_3)
 
-    result = keras.layers.Dense(1, activation='relu', name='Activation')(dense_4)
+    result = keras.layers.Dense(1, activation='sigmoid', name='Activation')(dense_4)
     adam = Adam(lr=0.005)
     model = keras.Model([receiver_input, sender_input], result)
-    model.compile(optimizer=adam, loss='mean_absolute_error', metrics=['accuracy'])
+    model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
 
     history = model.fit([finder_decisions_train['Sender_index'].values, finder_decisions_train['Receiver_index'].values],
                         finder_decisions_train['Decision'].values, epochs=250, verbose=1, batch_size=BATCH_SIZE,
-                        steps_per_epoch=len(finder_decisions_train),
-                        validation_steps=len(finder_decisions_valid),
                         validation_data=([finder_decisions_valid['Sender_index'].values, finder_decisions_valid['Receiver_index'].values],
                                                         finder_decisions_valid['Decision'].values))
 
