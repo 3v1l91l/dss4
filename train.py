@@ -5,9 +5,13 @@ from sklearn.model_selection import train_test_split
 from keras.optimizers import Adam
 
 np.random.seed(42)
-
+BATCH_SIZE = 256
 def train():
     users, finder_decisions = load_data()
+    zz = users.index.unique()[:10000]
+    users.drop(users.index[~users.index.isin(zz)], inplace=True)
+    finder_decisions.drop(finder_decisions.index[~finder_decisions['Sender_id'].isin(zz)], inplace=True)
+    finder_decisions.drop(finder_decisions.index[~finder_decisions['Receiver_id'].isin(zz)], inplace=True)
     users['index'] = np.arange(len(users))
     finder_decisions =  finder_decisions.merge(users, how='left', left_on='Sender_id', right_index=True)
     finder_decisions.rename(columns={'age': 'Sender_age', 'gender': 'Sender_gender', 'index': 'Sender_index'}, inplace=True)
@@ -44,7 +48,8 @@ def train():
     model.compile(optimizer=adam, loss='mean_absolute_error', metrics=['accuracy'])
 
     history = model.fit([finder_decisions_train['Sender_index'].values, finder_decisions_train['Receiver_index'].values],
-                        finder_decisions_train['Decision'].values, epochs=250, verbose=1, steps_per_epoch=len(finder_decisions_train),
+                        finder_decisions_train['Decision'].values, epochs=250, verbose=1, batch_size=BATCH_SIZE,
+                        steps_per_epoch=len(finder_decisions_train),
                         validation_steps=len(finder_decisions_valid),
                         validation_data=([finder_decisions_valid['Sender_index'].values, finder_decisions_valid['Receiver_index'].values],
                                                         finder_decisions_valid['Decision'].values))
