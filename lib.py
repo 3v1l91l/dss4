@@ -9,7 +9,7 @@ def load_data():
     users['User_id'] = users['User_id'].astype(np.int64)
     users.set_index('User_id', inplace=True)
 
-    # finder_decisions = pd.read_csv('Finder_decisions_.csv', sep=';')#, nrows=10000)
-    # finder_decisions.drop(finder_decisions[(~finder_decisions['Receiver_id'].isin(users.index))].index.values, inplace=True)
-    # return users, finder_decisions
-    return users, 0
+    finder_decisions = pd.read_csv('Finder_decisions_.csv', sep=';')#, nrows=10000)
+    finder_decisions.drop(finder_decisions[(~finder_decisions['Receiver_id'].isin(users.index))].index.values, inplace=True)
+    return users, finder_decisions
+    # return users, 0

@@ -6,27 +6,52 @@ from PIL import Image
 from keras_vggface.vggface import VGGFace
 from keras_vggface import utils
 from tqdm import tqdm
+from multiprocessing import Pool
+import math
+from keras.applications.inception_v3 import InceptionV3
+num_batches = 16
 
 users_df, _ = load_data()
-filepaths = list(map(lambda x: os.path.join('processed_photos', str(x) + '.jpg'), users_df.index.values))
-
-vgg_model = VGGFace(include_top=False, input_shape=(299, 299, 3), pooling='avg') # pooling: None, avg or max
-
-
+users_df = users_df.iloc[:500]
 users_df['feature'] = 0
+users_df['feature'] = users_df['feature'].asobject
+# model = VGGFace(include_top=False, input_shape=(299, 299, 3), pooling='avg')
+model = InceptionV3(include_top=False, input_shape=(299, 299, 3), pooling='avg', weights='imagenet')
+# for layer in vgg_model.layers:
+#     if hasattr(layer, 'trainable'):
+#         layer.trainable = False
 
-users_df['feature'] = users_df['feature'].astype(object)
+def extract_feature(user_ids):
+    paths = map(lambda user_id: os.path.join('processed_photos', str(user_id) + '.jpg'), user_ids)
+    imgs = [np.array(Image.open(path), dtype=np.float64) for path in paths]
+    # img = np.expand_dims(img, axis=0)
+    imgs = np.stack(imgs)
+    imgs = utils.preprocess_input(imgs, version=1)  # or version=2
+    features = model.predict(imgs)
+    for i in range(len(user_ids)):
+        users_df.set_value(user_ids[i], 'feature', features[i])
 
-for i in tqdm(range(len(filepaths))):
-    img = np.array(Image.open(filepaths[i]), dtype=np.float64)
-    img = np.expand_dims(img, axis=0)
-    img = utils.preprocess_input(img, version=1)  # or version=2
-    features = vgg_model.predict(img)
-    users_df.iat[i, users_df.columns.get_loc('feature')] = features
-users_df.to_pickle('users_df')
+def main():
+    # users_df, _ = load_data()
+    pool = Pool(2)
+    # list(tqdm(pool.imap_unordered(extract_feature, np.array_split(users_df.index.values, num_batches)), total=len(users_df)//num_batches))
+    i = 0
+    for split in tqdm(np.array_split(users_df.index.values, math.ceil(len(users_df.index.values)/num_batches))):
+        i = i+1
+        print(i)
+        extract_feature(split)
+    # list(tqdm((extract_feature, np.array_split(users_df.index.values, num_batches)), total=len(users_df)//num_batches))
 
-print('done')
-#
+    # list(tqdm(map(extract_feature, users_df.index.values), total=len(users_df)))
+
+    users_df.to_pickle('users_df')
+
+    print('done')
+
+if __name__ == '__main__':
+    main()
+
+
 # for i in range(len(users_df)):
 #     img = Image.open(filepaths[i])
 #     users_df.iloc[i, 'photo_feature'] = model.predict(np.array(img))

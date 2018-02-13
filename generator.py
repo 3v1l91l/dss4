@@ -34,3 +34,13 @@ def train_generator(finder_decisions, batch_size):
         yield ([finder_decisions['Sender_index'].values[ix], finder_decisions['Receiver_index'].values[ix], imgs],
                finder_decisions['Decision'].values[ix])
 
+@threadsafe_generator
+def train_generator2(finder_decisions, batch_size):
+    while True:
+        ix = np.random.randint(0, len(finder_decisions), batch_size)
+        filepaths = map(lambda x: os.path.join('processed_photos', str(x) + '.jpg'), finder_decisions['Receiver_id'].values[ix])
+        imgs = map(Image.open, filepaths)
+        imgs = np.stack(imgs)
+        yield ([finder_decisions['Sender_index'].values[ix], finder_decisions['Receiver_index'].values[ix], imgs],
+               finder_decisions['Decision'].values[ix])
+
