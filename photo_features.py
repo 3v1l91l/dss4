@@ -9,16 +9,18 @@ from tqdm import tqdm
 from multiprocessing import Pool
 import math
 from keras.applications.inception_v3 import InceptionV3
-num_batches = 16
+num_batches = 32
 
-# users_df, _ = load_data()
-# users_df['feature'] = None
-users_df = pd.read_pickle('users_df')
+if os.path.isfile('users_df'):
+    users_df = pd.read_pickle('users_df')
+else:
+    users_df, _ = load_data()
+    users_df['feature'] = None
 
 users_df['feature'] = users_df['feature'].asobject
 # users_df = pd.read_pickle('users_df')
-# model = VGGFace(include_top=False, input_shape=(299, 299, 3), pooling='avg')
-model = InceptionV3(include_top=False, input_shape=(299, 299, 3), pooling='avg', weights='imagenet')
+model = VGGFace(include_top=False, input_shape=(299, 299, 3), pooling='avg')
+# model = InceptionV3(include_top=False, input_shape=(299, 299, 3), pooling='avg', weights='imagenet')
 # for layer in vgg_model.layers:
 #     if hasattr(layer, 'trainable'):
 #         layer.trainable = False
@@ -38,7 +40,7 @@ def main():
     # pool = Pool(2)
     # list(tqdm(pool.imap_unordered(extract_feature, np.array_split(users_df.index.values, num_batches)), total=len(users_df)//num_batches))
     # i = 0
-    ids = users_df.index.values[40000:]
+    ids = users_df.index.values
     for split in tqdm(np.array_split(ids, math.ceil(len(ids)/num_batches))):
         extract_feature(split)
     # list(tqdm((extract_feature, np.array_split(users_df.index.values, num_batches)), total=len(users_df)//num_batches))

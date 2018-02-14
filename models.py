@@ -51,17 +51,25 @@ import keras
 
 def get_model():
 
-    sender_input = keras.layers.Input(shape=(2048,), name='sender')
+    sender_like_input = keras.layers.Input(shape=(2048,), name='sender_like')
+    # sender_skip_input = keras.layers.Input(shape=(2048,), name='sender_skip')
+
     # sender_vec = keras.layers.Dropout(0.2)(sender_vec)
 
     receiver_input = keras.layers.Input(shape=(2048,), name='receiver')
     # receiver_vec = keras.layers.Dropout(0.2)(receiver_vec)
 
     # concat = keras.layers.concatenate([sender_vec, receiver_vec, features_input])
-    concat = keras.layers.concatenate([sender_input, receiver_input])
+    concat = keras.layers.concatenate([sender_like_input,
+                                       # sender_skip_input,
+                                       receiver_input])
+
+    dense1 = keras.layers.Dense(1000)(concat)
+
+    dense2 = keras.layers.Dense(500)(dense1)
 
     # concat_dropout = keras.layers.Dropout(0.2)(concat)
-    dense = keras.layers.Dense(200, name='FullyConnected')(concat)
+    dense = keras.layers.Dense(200, name='FullyConnected')(dense2)
     # dense = keras.layers.Dense(200, name='FullyConnected')(features_input)
 
     # dropout_1 = keras.layers.Dropout(0.2, name='Dropout')(dense)
@@ -75,6 +83,9 @@ def get_model():
 
     result = keras.layers.Dense(1, activation='sigmoid', name='Activation')(dense_4)
     adam = keras.optimizers.Adam(lr=0.005)
-    model = keras.Model([receiver_input, sender_input], result)
+    model = keras.Model([sender_like_input,
+                         # sender_skip_input,
+                         receiver_input], result)
 
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
+    return model

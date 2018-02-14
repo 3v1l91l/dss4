@@ -5,8 +5,10 @@ import numpy as np
 from ggplot import ggplot, ggtitle, geom_point, aes
 
 users_df = pd.read_pickle('users_df')
-users_df = users_df[~users_df['preferences'].isnull()]
-data = np.stack(users_df['preferences'].values)
+# users_df = users_df[~users_df['like_preferences'].isnull()]
+# data = np.stack(users_df['like_preferences'].values)
+users_df = users_df[~users_df['skip_preferences'].isnull()]
+data = np.stack(users_df['skip_preferences'].values)
 
 pca = PCA(n_components=3)
 pca_result = pca.fit_transform(data)
