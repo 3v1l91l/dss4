@@ -8,4 +8,6 @@ users_df = pd.read_pickle('users_df')
 finder_decisions = finder_decisions.merge(users_df['feature'].to_frame(), how='left', left_on='Receiver_id', right_index=True)
 gr = finder_decisions.groupby('Sender_id')['feature'].apply(np.mean)
 users_df['preferences'] = None
+users_df['preferences'] = gr
+users_df.to_pickle('users_df')
 # for id in users_df.index.values:
