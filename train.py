@@ -11,9 +11,11 @@ from models import *
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import lightgbm as lgb
+from sklearn.neighbors import KNeighborsClassifier
+from keras.models import load_model
 
 np.random.seed(42)
-BATCH_SIZE = 128
+BATCH_SIZE = 256
 
 from keras import backend as K
 class LearningRateTracker(Callback):
@@ -33,16 +35,31 @@ def get_callbacks(model_name='model'):
     return [model_checkpoint, early_stopping, reduce_lr, lr_tracker]
 
 def train():
-    _, finder_decisions = load_data()
-    users_df = pd.read_pickle('users_df')
-    users_df = users_df[(~users_df['like_preferences'].isnull()) & (~users_df['skip_preferences'].isnull()) & (~users_df['feature'].isnull()) ]
-    finder_decisions = finder_decisions.merge(users_df[['like_preferences', 'skip_preferences']], how='right', left_on='Sender_id',
-                                              right_index=True)
-    finder_decisions = finder_decisions.merge(users_df['feature'].to_frame(), how='right', left_on='Receiver_id',
-                                              right_index=True)
-    finder_decisions = finder_decisions[(~finder_decisions['like_preferences'].isnull()) & (~finder_decisions['skip_preferences'].isnull()) & (~finder_decisions['feature'].isnull()) ]
+    users, finder_decisions = load_data()
+    # users_df = pd.read_pickle('users_df')
+    # users_df = users_df[(~users_df['feature'].isnull()) ]
+    # finder_decisions = finder_decisions.merge(users_df['feature'].to_frame(), how='left', left_on='Receiver_id',
+    #                                           right_index=True)
+    # finder_decisions.drop(finder_decisions.index[finder_decisions['feature'].isnull()],inplace=True)
+    # finder_decisions['Decision'] = finder_decisions['Decision'] == 'like'
+    #
+    # print(finder_decisions['Sender_id'].value_counts())
+    # # finder_decisions = finder_decisions[finder_decisions['Sender_id'].value_counts() > 100]
+    # data = finder_decisions[finder_decisions['Sender_id'] == 3023001477]
+    # data_train, data_valid = train_test_split(data, test_size=0.5)
+    # neigh = KNeighborsClassifier(n_neighbors=3)
+    # neigh.fit(np.stack(data_train['feature']), data_train['Decision'])
+    # predictions = neigh.predict(np.stack(data_valid['feature']))
+    # print((predictions == data_valid['Decision']).sum()/len(predictions))
 
-    finder_decisions['Decision'] = finder_decisions['Decision'] == 'like'
+    # users_df = users_df[(~users_df['like_preferences'].isnull()) & (~users_df['skip_preferences'].isnull()) & (~users_df['feature'].isnull()) ]
+    # finder_decisions = finder_decisions.merge(users_df[['like_preferences', 'skip_preferences']], how='right', left_on='Sender_id',
+    #                                           right_index=True)
+    # finder_decisions = finder_decisions.merge(users_df['feature'].to_frame(), how='right', left_on='Receiver_id',
+    #                                           right_index=True)
+    # finder_decisions = finder_decisions[(~finder_decisions['like_preferences'].isnull()) & (~finder_decisions['skip_preferences'].isnull()) & (~finder_decisions['feature'].isnull()) ]
+    #
+    # finder_decisions['Decision'] = finder_decisions['Decision'] == 'like'
 
 
     # for i in range(len(finder_decisions)):
@@ -57,24 +74,24 @@ def train():
     # finder_decisions.drop(finder_decisions.index[finder_decisions['preferences'].isnull()], inplace=True)
 
 
-    # zz = users.index.unique()[:10000]
-    # users.drop(users.index[~users.index.isin(zz)], inplace=True)
-    # finder_decisions.drop(finder_decisions.index[~finder_decisions['Sender_id'].isin(zz)], inplace=True)
-    # finder_decisions.drop(finder_decisions.index[~finder_decisions['Receiver_id'].isin(zz)], inplace=True)
-    # sender_value_counts = finder_decisions['Sender_id'].value_counts()
-    # finder_decisions.drop(finder_decisions.index[finder_decisions['Sender_id'].isin( sender_value_counts.index[sender_value_counts==1])], inplace=True)
+    zz = users.index.unique()[:20000]
+    users.drop(users.index[~users.index.isin(zz)], inplace=True)
+    finder_decisions.drop(finder_decisions.index[~finder_decisions['Sender_id'].isin(zz)], inplace=True)
+    finder_decisions.drop(finder_decisions.index[~finder_decisions['Receiver_id'].isin(zz)], inplace=True)
+    sender_value_counts = finder_decisions['Sender_id'].value_counts()
+    finder_decisions.drop(finder_decisions.index[finder_decisions['Sender_id'].isin( sender_value_counts.index[sender_value_counts==1])], inplace=True)
     # users.drop(users.index[~users.index.isin(np.union1d(finder_decisions['Sender_id'].values, finder_decisions['Receiver_id'].values))], inplace=True)
-    # users['index'] = np.arange(len(users))
-    # finder_decisions = finder_decisions.merge(users, how='left', left_on='Sender_id', right_index=True)
-    # finder_decisions.rename(columns={'age': 'Sender_age', 'gender': 'Sender_gender', 'index': 'Sender_index'}, inplace=True)
-    # finder_decisions = finder_decisions.merge(users, how='left', left_on='Receiver_id', right_index=True)
-    # finder_decisions.rename(columns={'age': 'Receiver_age', 'gender': 'Receiver_gender', 'index': 'Receiver_index'}, inplace=True)
-    # finder_decisions['Decision'] = finder_decisions['Decision'] == 'like'
+    users['index'] = np.arange(len(users))
+    finder_decisions = finder_decisions.merge(users, how='left', left_on='Sender_id', right_index=True)
+    finder_decisions.rename(columns={'age': 'Sender_age', 'gender': 'Sender_gender', 'index': 'Sender_index'}, inplace=True)
+    finder_decisions = finder_decisions.merge(users, how='left', left_on='Receiver_id', right_index=True)
+    finder_decisions.rename(columns={'age': 'Receiver_age', 'gender': 'Receiver_gender', 'index': 'Receiver_index'}, inplace=True)
+    finder_decisions['Decision'] = finder_decisions['Decision'] == 'like'
 
     # n_users = len(users)
     # finder_decisions_train, finder_decisions_valid =  train_test_split(finder_decisions, stratify=finder_decisions['Decision'])
     # finder_decisions_train, finder_decisions_valid = train_test_split(finder_decisions, stratify=finder_decisions['Sender_index'], test_size=0.2)
-    finder_decisions_train, finder_decisions_valid = train_test_split(finder_decisions, test_size=0.2)
+    finder_decisions_train, finder_decisions_valid = train_test_split(finder_decisions, test_size=0.2, stratify=finder_decisions['Sender_index'])
 
     # d_train = lgb.Dataset(finder_decisions_train['like_preferences'], label=y_train)
     # params = {}
@@ -88,27 +105,28 @@ def train():
     # params['max_depth'] = 10
     # clf = lgb.train(params, d_train, 100)
 
-    model = get_model()
-    # model.fit([finder_decisions_train['Sender_index'].values, finder_decisions_train['Receiver_index'].values,
-    #            finder_decisions_train[['Sender_age', 'Sender_gender', 'Receiver_age', 'Receiver_gender']].values],
-    #                     finder_decisions_train['Decision'].values, epochs=20, verbose=1, batch_size=BATCH_SIZE,
-    #                     validation_data=([finder_decisions_valid['Sender_index'].values, finder_decisions_valid['Receiver_index'].values,
-    #                                       finder_decisions_valid[['Sender_age', 'Sender_gender', 'Receiver_age', 'Receiver_gender']].values],
-    #                                                     finder_decisions_valid['Decision'].values),
-    #                     callbacks=get_callbacks())
+    model = get_model_embedding(len(users))
+    # model = load_model('model.model')
+    model.fit([finder_decisions_train['Sender_index'].values, finder_decisions_train['Receiver_index'].values],
+                        finder_decisions_train['Decision'].values, epochs=100, verbose=1, batch_size=BATCH_SIZE,
+                        validation_data=([finder_decisions_valid['Sender_index'].values, finder_decisions_valid['Receiver_index'].values],
+                                                        finder_decisions_valid['Decision'].values),
+                        callbacks=get_callbacks())
 
     # model.fit([finder_decisions_train['Sender_index'].values, finder_decisions_train['Receiver_index'].values],
     #                     finder_decisions_train['Decision'].values, epochs=20, verbose=1, batch_size=BATCH_SIZE,
     #                     validation_data=([finder_decisions_valid['Sender_index'].values, finder_decisions_valid['Receiver_index'].values],
     #                                                     finder_decisions_valid['Decision'].values),
     #                     callbacks=get_callbacks())
-    train_generator_ = train_generator2(finder_decisions_train, batch_size=BATCH_SIZE)
-    valid_generator_ = train_generator2(finder_decisions_valid, batch_size=BATCH_SIZE)
-
-    model.fit_generator(train_generator_, epochs=20, verbose=1,
-                        steps_per_epoch=len(finder_decisions_train) // BATCH_SIZE,
-                        callbacks=get_callbacks(), validation_data=valid_generator_,
-                        validation_steps=len(finder_decisions_valid) // BATCH_SIZE)
+    # train_generator_ = train_generator2(finder_decisions_train, batch_size=BATCH_SIZE)
+    # valid_generator_ = train_generator2(finder_decisions_valid, batch_size=BATCH_SIZE)
+    # train_generator_ = train_generator(finder_decisions_train, batch_size=BATCH_SIZE)
+    # valid_generator_ = train_generator(finder_decisions_valid, batch_size=BATCH_SIZE)
+    #
+    # model.fit_generator(train_generator_, epochs=100, verbose=1,
+    #                     steps_per_epoch=len(finder_decisions_train) // BATCH_SIZE,
+    #                     callbacks=get_callbacks(), validation_data=valid_generator_,
+    #                     validation_steps=len(finder_decisions_valid) // BATCH_SIZE)
     # predictions = model.predict([finder_decisions_valid['Sender_index'].values, finder_decisions_valid['Receiver_index'].values],
     #                             batch_size=BATCH_SIZE)
     #
