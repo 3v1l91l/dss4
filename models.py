@@ -91,7 +91,7 @@ def get_model():
     return model
 
 def get_model_embedding(n_users):
-    n_latent_factors = 50
+    n_latent_factors = 200
     embedding_layer = keras.layers.Embedding(n_users + 1, n_latent_factors, name='flattened_embedding')
 
     sender_input = keras.layers.Input(shape=[1], name='sender')
@@ -109,8 +109,9 @@ def get_model_embedding(n_users):
 
 
     # sender_vec = keras.layers.Dropout(0.2)(sender_vec)
+    dense0 = keras.layers.Dense(2000, activation='relu')(concat)
 
-    dense1 = keras.layers.Dense(1000, activation='relu')(concat)
+    dense1 = keras.layers.Dense(1000, activation='relu')(dense0)
 
     dense2 = keras.layers.Dense(500, activation='relu')(dense1)
 
