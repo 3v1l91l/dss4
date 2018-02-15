@@ -136,15 +136,15 @@ def get_model_embedding(n_users):
     return model
 
 def get_model_embedding2(n_users):
-    n_latent_factors = 150
-    embedding_layer = keras.layers.Embedding(n_users + 1, n_latent_factors, name='flattened_embedding', input_length=1000)
+    n_latent_factors = 50
+    embedding_layer = keras.layers.Embedding(n_users + 1, n_latent_factors, name='flattened_embedding', input_length=1)
 
-    sender_input = keras.layers.Input(shape=(100,), name='sender')
+    sender_input = keras.layers.Input(shape=1, name='sender')
     sender_embedding = embedding_layer(sender_input)
     sender_vec = keras.layers.Flatten(name='flattened_sender')(sender_embedding)
     # sender_vec = keras.layers.Dropout(0.2)(sender_vec)
 
-    receiver_input = keras.layers.Input(shape=[1], name='receiver')
+    receiver_input = keras.layers.Input(shape=1, name='receiver')
     receiver_embedding = embedding_layer(receiver_input)
     receiver_vec = keras.layers.Flatten(name='flattened_receiver')(receiver_embedding)
     # receiver_vec = keras.layers.Dropout(0.2)(receiver_vec)

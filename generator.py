@@ -2,6 +2,8 @@ import threading
 from PIL import Image
 import numpy as np
 import os
+from keras.preprocessing.sequence import pad_sequences
+
 class threadsafe_iter:
     """Takes an iterator/generator and makes it thread-safe by
     serializing call to the `next` method of given iterator/generator.
@@ -53,5 +55,15 @@ def train_generator_embed(finder_decisions, batch_size):
                 # np.stack(finder_decisions['skip_preferences'].values[ix]),
                 np.stack(finder_decisions['feature'].values[ix])],
                finder_decisions['Decision'].values[ix])
+
+# @threadsafe_generator
+# def train_generator_seq(finder_decisions, batch_size, maxlen=100):
+#     while True:
+#         ix = np.random.randint(0, len(finder_decisions), batch_size)
+#
+#         yield (finder_decisions[''].values[ix]),
+#                 # np.stack(finder_decisions['skip_preferences'].values[ix]),
+#                 np.stack(finder_decisions['feature'].values[ix])],
+#                finder_decisions['Decision'].values[ix])
 
 
