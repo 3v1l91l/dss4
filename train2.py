@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 import keras
 from keras.preprocessing import sequence
 
-max_num_history_decisions = 100
+max_num_history_decisions = 500
 
 users, finder_decisions = load_data()
 zz = users.index.unique()[:20000]
@@ -41,10 +41,11 @@ finder_decisions = finder_decisions.merge(users[['like_seq', 'skip_seq']], how='
 finder_decisions = finder_decisions[(~finder_decisions['like_seq'].isnull()) & (~finder_decisions['skip_seq'].isnull())]
 train, test = train_test_split(finder_decisions, test_size=0.2)
 
-embedding_vecor_length = 50
-n_seq_latent_factors = 200
-n_rec_latent_factors = 50
+n_seq_latent_factors = 500
+n_rec_latent_factors = 200
+# n_users = len(users)
 n_users = len(zz)
+
 like_seq_input = keras.layers.Input(shape=(max_num_history_decisions,))
 like_seq_emb = keras.layers.Embedding(n_users + 1, n_seq_latent_factors, input_length=max_num_history_decisions)(like_seq_input)
 like_seq_vec = keras.layers.Flatten()(like_seq_emb)
@@ -62,11 +63,8 @@ receiver_vec = keras.layers.Flatten()(receiver_emb)
 x = keras.layers.concatenate([like_seq_input,
                                    # skip_seq_input,
                                    rec_input])
-
-x = keras.layers.Dense(200, activation='relu')(x)
-x = keras.layers.Dense(500, activation='relu')(x)
-x = keras.layers.Dense(1000, activation='relu')(x)
-x = keras.layers.Dense(2000, activation='relu')(x)
+x = keras.layers.Dense(8000, activation='relu')(x)
+x = keras.layers.Dense(4000, activation='relu')(x)
 x = keras.layers.Dense(1000, activation='relu')(x)
 x = keras.layers.Dense(500, activation='relu')(x)
 x = keras.layers.Dense(200, activation='relu')(x)
