@@ -4,10 +4,10 @@ from spotlight.factorization.explicit import ExplicitFactorizationModel
 import torch
 
 users, finder_decisions = load_data()
-zz = users.index.unique()[:20000]
-users.drop(users.index[~users.index.isin(zz)], inplace=True)
-finder_decisions.drop(finder_decisions.index[~finder_decisions['Sender_id'].isin(zz)], inplace=True)
-finder_decisions.drop(finder_decisions.index[~finder_decisions['Receiver_id'].isin(zz)], inplace=True)
+# zz = users.index.unique()[:20000]
+# users.drop(users.index[~users.index.isin(zz)], inplace=True)
+# finder_decisions.drop(finder_decisions.index[~finder_decisions['Sender_id'].isin(zz)], inplace=True)
+# finder_decisions.drop(finder_decisions.index[~finder_decisions['Receiver_id'].isin(zz)], inplace=True)
 sender_value_counts = finder_decisions['Sender_id'].value_counts()
 finder_decisions.drop(
     finder_decisions.index[finder_decisions['Sender_id'].isin(sender_value_counts.index[sender_value_counts == 1])],
@@ -22,10 +22,11 @@ finder_decisions.rename(columns={'age': 'Receiver_age', 'gender': 'Receiver_gend
 
 ratings = np.ones(len(finder_decisions))
 ratings[finder_decisions['Decision'] == 'skip'] = -1
-dataset = Interactions(finder_decisions['Sender_index'].values, finder_decisions['Receiver_index'].values, ratings.values)
+ratings = ratings.astype(np.float32)
+dataset = Interactions(finder_decisions['Sender_index'].values, finder_decisions['Receiver_index'].values, ratings)
 model = ExplicitFactorizationModel(loss='logistic',
                                    embedding_dim=128,  # latent dimensionality
-                                   n_iter=10,  # number of epochs of training
+                                   n_iter=100,  # number of epochs of training
                                    batch_size=1024,  # minibatch size
                                    l2=1e-9,  # strength of L2 regularization
                                    learning_rate=1e-3,
@@ -42,3 +43,4 @@ train_rmse = rmse_score(model, train)
 test_rmse = rmse_score(model, test)
 
 print('Train RMSE {:.3f}, test RMSE {:.3f}'.format(train_rmse, test_rmse))
+torch.save(model, 'spotlight.model')
