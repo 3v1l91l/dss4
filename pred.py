@@ -1,10 +1,10 @@
 from lib import *
 from spotlight.interactions import Interactions
-from spotlight.factorization.explicit import ExplicitFactorizationModel
 import torch
 
+
 users, finder_decisions = load_data()
-zz = users.index.unique()[:20000]
+zz = users.index.unique()[:10000]
 users.drop(users.index[~users.index.isin(zz)], inplace=True)
 finder_decisions.drop(finder_decisions.index[~finder_decisions['Sender_id'].isin(zz)], inplace=True)
 finder_decisions.drop(finder_decisions.index[~finder_decisions['Receiver_id'].isin(zz)], inplace=True)
@@ -24,23 +24,12 @@ ratings = np.ones(len(finder_decisions))
 ratings[finder_decisions['Decision'] == 'skip'] = -1
 ratings = ratings.astype(np.float32)
 dataset = Interactions(finder_decisions['Sender_index'].values, finder_decisions['Receiver_index'].values, ratings)
-model = ExplicitFactorizationModel(loss='logistic',
-                                   embedding_dim=128,  # latent dimensionality
-                                   n_iter=20,  # number of epochs of training
-                                   batch_size=256,  # minibatch size
-                                   l2=1e-9,  # strength of L2 regularization
-                                   learning_rate=1e-2,
-                                   use_cuda=torch.cuda.is_available())
+
 from spotlight.cross_validation import random_train_test_split
 
 train, test = random_train_test_split(dataset, random_state=np.random.RandomState(42))
 
-print('Split into \n {} and \n {}.'.format(train, test))
-model.fit(train, verbose=True)
-from spotlight.evaluation import rmse_score
+spotlight_model = torch.load('spotlight.model')
 
-train_rmse = rmse_score(model, train)
-test_rmse = rmse_score(model, test)
-
-print('Train RMSE {:.3f}, test RMSE {:.3f}'.format(train_rmse, test_rmse))
-torch.save(model, 'spotlight.model')
+predictions = spotlight_model.predict(test.user_ids, test.item_ids)
+print((predictions == test.ratings).sum()/len(predictions))
