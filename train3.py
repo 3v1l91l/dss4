@@ -26,7 +26,7 @@ ratings = ratings.astype(np.float32)
 dataset = Interactions(finder_decisions['Sender_index'].values, finder_decisions['Receiver_index'].values, ratings)
 model = ExplicitFactorizationModel(loss='logistic',
                                    embedding_dim=128,  # latent dimensionality
-                                   n_iter=20,  # number of epochs of training
+                                   n_iter=10,  # number of epochs of training
                                    batch_size=256,  # minibatch size
                                    l2=1e-9,  # strength of L2 regularization
                                    learning_rate=1e-2,
@@ -37,10 +37,13 @@ train, test = random_train_test_split(dataset, random_state=np.random.RandomStat
 
 print('Split into \n {} and \n {}.'.format(train, test))
 model.fit(train, verbose=True)
+torch.save(model, 'spotlight.model')
+
 from spotlight.evaluation import rmse_score
 
 train_rmse = rmse_score(model, train)
 test_rmse = rmse_score(model, test)
 
 print('Train RMSE {:.3f}, test RMSE {:.3f}'.format(train_rmse, test_rmse))
-torch.save(model, 'spotlight.model')
+predictions = model.predict(test.user_ids, test.item_ids)
+print(((predictions>0.5) == (test.ratings > 0)).sum()/len(predictions))
