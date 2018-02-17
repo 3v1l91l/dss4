@@ -8,7 +8,7 @@ from keras_vggface import utils
 from tqdm import tqdm
 from multiprocessing import Pool
 import math
-from keras.applications.inception_v3 import InceptionV3
+from keras.applications.inception_v3 import InceptionV3, preprocess_input
 num_batches = 32
 
 if os.path.isfile('users_df'):
@@ -30,6 +30,7 @@ def extract_feature(user_ids):
     imgs = [np.array(Image.open(path), dtype=np.float64) for path in paths]
     # img = np.expand_dims(img, axis=0)
     imgs = np.stack(imgs)
+    preprocess_input(imgs)
     # imgs = utils.preprocess_input(imgs, version=1)  # or version=2
     features = model.predict(imgs)
     for i in range(len(user_ids)):
@@ -40,8 +41,9 @@ def main():
     # pool = Pool(2)
     # list(tqdm(pool.imap_unordered(extract_feature, np.array_split(users_df.index.values, num_batches)), total=len(users_df)//num_batches))
     # i = 0
-    ids = finder_decisions[finder_decisions['Sender_id'] == 3023001477]['Receiver_id'].values
-    ids = ids[:5000]
+    ids = finder_decisions['Receiver_id'].values
+    # ids = finder_decisions[finder_decisions['Sender_id'] == 3023001477]['Receiver_id'].values
+    # ids = ids[:5000]
     # ids = users_df.index.values
     for split in tqdm(np.array_split(ids, math.ceil(len(ids)/num_batches))):
         extract_feature(split)
