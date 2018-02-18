@@ -42,7 +42,7 @@ def main():
     # pool = Pool(2)
     # list(tqdm(pool.imap_unordered(extract_feature, np.array_split(users_df.index.values, num_batches)), total=len(users_df)//num_batches))
     # i = 0
-    ids = [x.split('/')[-1].split('.')[0] for x in glob.glob('./processed_photos/*.jpg')]
+    ids = [int(x.split('/')[-1].split('.')[0]) for x in glob.glob('./processed_photos/*.jpg')]
     # ids = finder_decisions['Receiver_id'].values
     # ids = finder_decisions[finder_decisions['Sender_id'] == 3023001477]['Receiver_id'].values
     # ids = ids[:5000]

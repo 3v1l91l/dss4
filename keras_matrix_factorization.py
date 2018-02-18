@@ -5,7 +5,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras.models import load_model
 from keras import backend as K
 from keras.constraints import non_neg
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 def get_callbacks(model_name='model'):
     model_checkpoint = ModelCheckpoint(model_name + '.model', monitor='val_acc', save_best_only=True, save_weights_only=False,
@@ -52,7 +52,8 @@ finder_decisions = finder_decisions.merge(users, how='left', left_on='Receiver_i
 finder_decisions.rename(columns={'age': 'Receiver_age', 'gender': 'Receiver_gender', 'index': 'Receiver_index'},
                         inplace=True)
 
-age_encoder = LabelEncoder(users['age'])
+age_encoder = OneHotEncoder()
+age_encoder.fit(users['age'].values)
 age = age_encoder.transform(finder_decisions['Sender_age'])
 
 finder_decisions_train, finder_decisions_valid = train_test_split(finder_decisions, test_size=0.2,
