@@ -10,6 +10,7 @@ from multiprocessing import Pool
 import math
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
 num_batches = 32
+import glob
 
 if os.path.isfile('users_df'):
     users_df = pd.read_pickle('users_df')
@@ -41,7 +42,8 @@ def main():
     # pool = Pool(2)
     # list(tqdm(pool.imap_unordered(extract_feature, np.array_split(users_df.index.values, num_batches)), total=len(users_df)//num_batches))
     # i = 0
-    ids = finder_decisions['Receiver_id'].values
+    ids = [x.split('/')[-1].split('.')[0] for x in glob.glob('./processed_photos/*.jpg')]
+    # ids = finder_decisions['Receiver_id'].values
     # ids = finder_decisions[finder_decisions['Sender_id'] == 3023001477]['Receiver_id'].values
     # ids = ids[:5000]
     # ids = users_df.index.values
