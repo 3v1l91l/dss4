@@ -6,18 +6,20 @@ import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 import pandas as pd
 
+### execute: tensorboard --logdir=embedding_logs --port=6006
+
 tf.__version__
 
 PATH = os.getcwd()
 
-LOG_DIR = PATH + '/embedding-logs'
+LOG_DIR = os.path.join(PATH, 'embedding_logs')
 # metadata = os.path.join(LOG_DIR, 'metadata2.tsv')
 
 # %%
 users_df = pd.read_pickle('users_df')
-users_df = users_df[:1500]
-# users_df = users_df[~users_df['feature'].isnull()].iloc[:400]
-data_path = PATH + '/processed_photos'
+# users_df = users_df[:1500]
+users_df = users_df[~users_df['vgg_face'].isnull()]
+data_path = os.path.join(PATH, 'processed_photos')
 img_data = []
 for img in users_df.index.values:
     input_img = cv2.imread(data_path + '/' + str(img)+'.jpg')
