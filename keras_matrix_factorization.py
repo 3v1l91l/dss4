@@ -80,14 +80,17 @@ sender_input = keras.layers.Input(shape=[1])
 sender_embedding = keras.layers.Embedding(name='sender_embedding', input_dim=n_senders, output_dim=n_latent_factors, input_length=1, embeddings_constraint=non_neg())(sender_input)
 sender_vec = keras.layers.Flatten()(sender_embedding)
 
-receiver_input = keras.layers.Input(shape=[1])
-receiver_embedding = keras.layers.Embedding(name='receiver_embedding', input_dim=n_receivers, output_dim=n_latent_factors, input_length=1, embeddings_constraint=non_neg())(receiver_input)
-receiver_vec = keras.layers.Flatten()(receiver_embedding)
+
 
 meta_input = keras.layers.Input(shape=[512], name='meta')
 meta = keras.layers.Dense(128, activation='relu')(meta_input)
 meta = keras.layers.Dense(64, activation='relu')(meta)
 meta = keras.layers.Dense(5, activation='relu')(meta)
+
+receiver_input = keras.layers.Input(shape=[1])
+receiver_input = keras.layers.merge.c
+receiver_embedding = keras.layers.Embedding(name='receiver_embedding', input_dim=n_receivers, output_dim=n_latent_factors, input_length=1, embeddings_constraint=non_neg())(receiver_input)
+receiver_vec = keras.layers.Flatten()(receiver_embedding)
 
 # meta_embedding = keras.layers.Embedding(name='meta_embedding', input_dim=n_receivers, output_dim=2, input_length=512, embeddings_constraint=non_neg())(meta_input)
 # meta_vec = keras.layers.Flatten()(meta_embedding)
@@ -96,8 +99,8 @@ meta = keras.layers.Dense(5, activation='relu')(meta)
 # meta_embedding = keras.layers.Embedding(name='meta_embedding', input_dim=n_receivers, output_dim=5, input_length=512, embeddings_constraint=non_neg())(meta_input)
 # meta_vec = keras.layers.Flatten()(meta_embedding)
 
-prod = keras.layers.Dot(axes=0)([sender_vec, receiver_vec])
-prod = keras.layers.Dense(5, activation='relu')(prod)
+# prod = keras.layers.Dot(axes=0)([sender_vec, receiver_vec])
+# prod = keras.layers.Dense(5, activation='relu')(prod)
 
 # x = keras.layers.Dot(axes=2)([sender_embedding, meta_embedding])
 # prod = keras.layers.Flatten()(prod)
