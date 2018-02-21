@@ -13,7 +13,7 @@ def get_callbacks(model_name='model'):
     model_checkpoint = ModelCheckpoint(model_name + '.model', monitor='val_acc', save_best_only=True, save_weights_only=False,
                                        verbose=1)
     early_stopping = EarlyStopping(monitor='val_acc', patience=5, verbose=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.5, patience=1, verbose=1)
+    reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.5, patience=1, verbose=1, epsilon=1e-3)
     return [model_checkpoint, early_stopping, reduce_lr]
 
 _, finder_decisions = load_data()
@@ -24,6 +24,7 @@ sender_value_counts = finder_decisions['Sender_id'].value_counts()
 finder_decisions.drop(
     finder_decisions.index[finder_decisions['Sender_id'].isin(sender_value_counts.index[sender_value_counts <100])],
     inplace=True)
+print(finder_decisions['Sender_id'].nunique())
 # ids = finder_decisions['Sender_id'].value_counts()> 10
 # finder_decisions.drop(finder_decisions[~finder_decisions['Receiver_id'].isin(ids)].index.values, inplace=True)
 
@@ -100,21 +101,21 @@ finder_decisions_train, finder_decisions_valid = train_test_split(finder_decisio
 # print('Accuracy: {}'.format((finder_decisions_valid.iloc[:100,finder_decisions_valid.columns.get_loc('Prediction')] == finder_decisions_valid.iloc[:100,finder_decisions_valid.columns.get_loc('Decision')]).sum()/100))
 # print(cosine/skip)
 
-n_latent_factors=5
+n_latent_factors=10
 n_senders = len(users)
 n_receivers = len(users)
-sender_input = keras.layers.Input(shape=[1])
+sender_input = keras.layers.Input(shape=(1,))
 sender_embedding = keras.layers.Embedding(input_dim=n_senders, output_dim=n_latent_factors, input_length=1, embeddings_constraint=non_neg())(sender_input)
 sender_vec = keras.layers.Flatten()(sender_embedding)
 
-meta_input = keras.layers.Input(shape=[512], name='meta')
-meta = keras.layers.Embedding(input_dim=n_receivers, output_dim=n_latent_factors, input_length=512, embeddings_constraint=non_neg())(meta_input)
+meta_input = keras.layers.Input(shape=(512,), name='meta')
+meta = keras.layers.Embedding(input_dim=n_receivers, output_dim=n_latent_factors, input_length=1, embeddings_constraint=non_neg())(meta_input)
 meta = keras.layers.Flatten()(meta)
 
 # meta_embedding = keras.layers.Embedding(input_dim=n_receivers, output_dim=n_latent_factors, input_length=1, embeddings_constraint=non_neg())(meta_input)
 # meta_vec = keras.layers.Flatten()(meta_embedding)
 
-receiver_input = keras.layers.Input(shape=[1])
+receiver_input = keras.layers.Input(shape=(1,))
 receiver_embedding = keras.layers.Embedding(input_dim=n_receivers, output_dim=n_latent_factors, input_length=1, embeddings_constraint=non_neg())(receiver_input)
 receiver_vec = keras.layers.Flatten()(receiver_embedding)
 
@@ -126,8 +127,8 @@ x = keras.layers.Concatenate()([
 ])
 
 
-x = keras.layers.Dense(512, activation='relu')(x)
 x = keras.layers.Dense(128, activation='relu')(x)
+x = keras.layers.Dense(64, activation='relu')(x)
 x = keras.layers.Dense(1, activation='sigmoid')(x)
 #
 model = keras.Model([
@@ -154,9 +155,9 @@ history = model.fit([
                                          # np.stack(finder_decisions_valid['Sender_vgg_face'].values)
                                      ],
                                      finder_decisions_valid['Decision'].values),
-                    batch_size=256,
+                    batch_size=512,
                     callbacks=get_callbacks(),
-                    epochs=50, verbose=1)
+                    epochs=50, verbose=2)
 
 # history = model.fit([finder_decisions_train[['Sender_index', 'Sender_age', 'Sender_gender']].values,
 #                      finder_decisions_train[['Receiver_index', 'Receiver_age', 'Receiver_gender']].values],

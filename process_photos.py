@@ -37,31 +37,18 @@ def process_photo(filename_photo):
         resize_and_save(filename_photo, Image.fromarray(img))
 
 def resize_and_save(filename_photo, source_image):
-    # background = Image.new('RGB', (IMAGE_WIDTH, IMAGE_HEIGHT), "black")
-    # source_image.thumbnail(THUMBNAIL_SIZE)
-    # if (~(np.array(source_image.size) == THUMBNAIL_SIZE)).any():
-    #     max_im_size = max(source_image.size)
-    #     background2 = Image.new('RGB', (max_im_size, max_im_size), "black")
-    #     upperleft = (int((max_im_size - source_image.size[0]) / 2),
-    #                  int((max_im_size - source_image.size[1]) / 2))
-    #     background2.paste(source_image, upperleft)
-    #     source_image = background2.resize(THUMBNAIL_SIZE)
-    # upperleft = (int((THUMBNAIL_SIZE[0] - source_image.size[0]) / 2),
-    #              int((THUMBNAIL_SIZE[1] - source_image.size[1]) / 2))
-    # background.paste(source_image, upperleft)
-    background = ImageOps.fit(source_image, THUMBNAIL_SIZE)
+    img = ImageOps.fit(source_image, THUMBNAIL_SIZE)
 
-    background.save(os.path.join(PROCESSED_PHOTOS_PATH, filename_photo), 'JPEG')
+    img.save(os.path.join(PROCESSED_PHOTOS_PATH, filename_photo), 'JPEG')
 
 def process_photos():
     if not os.path.exists(PROCESSED_PHOTOS_PATH):
         os.makedirs(PROCESSED_PHOTOS_PATH)
     pool = multiprocessing.Pool(processes=NUM_PROCESSES)
     filename_photos_original = np.array(os.listdir(PHOTOS_PATH))
-    # filename_photos_original =  np.array(['3021988153.jpg'])
     filename_photos_processed = np.array(os.listdir(PROCESSED_PHOTOS_PATH))
     filename_photos_original = filename_photos_original[
-        ~ np.isin(filename_photos_original, filename_photos_processed)]
+        ~ np.isin(filename_photos_original, filename_photos_processed)][:5000]
     list(tqdm(pool.imap_unordered(process_photo, filename_photos_original), total=len(filename_photos_original)))
 
 if __name__ == '__main__':
